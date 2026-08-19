@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>VPN Client · Happy</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+        body {
+            background: #f0f4f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 1rem 3rem;
+        }
+        .container {
+            max-width: 1100px;
+            width: 100%;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 0.5rem;
+        }
+        header h1 {
+            font-size: 2.1rem;
+            font-weight: 700;
+            color: #0b1e33;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        header h1 i {
+            color: #2a7de1;
+            font-size: 2.2rem;
+        }
+        header p {
+            color: #3d5a78;
+            font-size: 1rem;
+            margin-top: 0.3rem;
+            opacity: 0.9;
+        }
+        .status-bar {
+            background: white;
+            border-radius: 16px;
+            padding: 0.9rem 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,20,40,0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.7rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+        .status-bar .info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 0.95rem;
+            color: #1f3a57;
+        }
+        .status-bar .info i {
+            color: #2a7de1;
+            width: 1.2rem;
+            text-align: center;
+        }
+        .badge {
+            background: #eef3fc;
+            padding: 0.3rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1a4b7a;
+        }
+        .actions {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            background: white;
+            border: 1px solid #d0ddee;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #1f3a57;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            text-decoration: none;
+        }
+        .btn:hover {
+            background: #f7faff;
+            border-color: #2a7de1;
+            box-shadow: 0 4px 10px rgba(42,125,225,0.08);
+        }
+        .btn-primary {
+            background: #1a4b7a;
+            border-color: #1a4b7a;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0f3a60;
+            border-color: #0f3a60;
+            color: white;
+        }
+        .btn i {
+            font-size: 0.9rem;
+        }
+        .server-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.2rem;
+            margin-top: 0.5rem;
+        }
+        .server-card {
+            background: white;
+            border-radius: 18px;
+            padding: 1.2rem 1.2rem 1rem;
+            box-shadow: 0 6px 18px rgba(0,20,40,0.05);
+            border: 1px solid rgba(0,0,0,0.02);
+            transition: transform 0.15s, box-shadow 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .server-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(0,20,40,0.08);
+            border-color: #d6e4f5;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-bottom: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .flag {
+            font-size: 1.9rem;
+            line-height: 1;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+        }
+        .country {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #0b1e33;
+            word-break: break-word;
+            flex: 1;
+        }
+        .protocol-tag {
+            background: #e6edf8;
+            padding: 0.2rem 0.7rem;
+            border-radius: 30px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            color: #1a4b7a;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .server-link {
+            font-size: 0.78rem;
+            color: #4a6a8a;
+            background: #f2f6fc;
+            padding: 0.5rem 0.7rem;
+            border-radius: 12px;
+            word-break: break-all;
+            font-family: 'SF Mono', 'Menlo', monospace;
+            margin: 0.4rem 0 0.2rem;
+            border: 1px solid #eaf0f8;
+            line-height: 1.5;
+            max-height: 4.8rem;
+            overflow-y: auto;
+        }
+        .card-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 0.7rem;
+            gap: 0.5rem;
+            border-top: 1px solid #eef4fa;
+            padding-top: 0.7rem;
+        }
+        .copy-btn {
+            background: transparent;
+            border: none;
+            color: #4a7aaa;
+            font-size: 0.8rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .copy-btn:hover {
+            background: #e3edf9;
+        }
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a2e44;
+            color: white;
+            padding: 0.7rem 1.8rem;
+            border-radius: 60px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+            pointer-events: none;
+            z-index: 999;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: #5a7a9a;
+        }
+        .empty-state i {
+            font-size: 3.5rem;
+            color: #b0c8e0;
+            margin-bottom: 1rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 3rem 0;
+            color: #3d6a94;
+        }
+        .loading i {
+            font-size: 2.2rem;
+            animation: spin 1.2s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .footer-note {
+            margin-top: 2.5rem;
+            color: #6a8aaa;
+            font-size: 0.85rem;
+            text-align: center;
+            border-top: 1px solid #dce6f2;
+            padding-top: 1.8rem;
+            width: 100%;
+        }
+        @media (max-width: 640px) {
+            .status-bar { flex-direction: column; align-items: stretch; }
+            .actions { justify-content: center; }
+            .server-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-globe"></i> VPN · Happy</h1>
+            <p>Серверы из <strong>catpaint/vpn</strong> — нажмите на карточку, чтобы скопировать ссылку</p>
+        </header>
+
+        <div class="status-bar" id="statusBar">
+            <div class="info">
+                <i class="fas fa-server"></i>
+                <span id="serverCount">Загрузка...</span>
+                <span class="badge" id="protocolBadge">hysteria2 · vmess · trojan</span>
+            </div>
+            <div class="actions">
+                <button class="btn" id="refreshBtn"><i class="fas fa-sync-alt"></i> Обновить</button>
+                <button class="btn btn-primary" id="downloadBtn"><i class="fas fa-file-export"></i> Скачать .txt</button>
+            </div>
+        </div>
+
+        <div id="serverGridContainer">
+            <div class="loading"><i class="fas fa-spinner"></i> Загрузка списка серверов...</div>
+        </div>
+
+        <div class="footer-note">
+            <i class="fas fa-shield-alt"></i> Источник: <a href="https://raw.githubusercontent.com/catpaint/vpn/refs/heads/main/vpn.txt" target="_blank" style="color:#2a7de1;text-decoration:none;">catpaint/vpn</a> · Данные обновляются при загрузке
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Ссылка скопирована</div>
+
+    <script>
+        (function() {
+            const CONFIG_URL = 'https://raw.githubusercontent.com/catpaint/vpn/refs/heads/main/vpn.txt';
+            
+            // DOM refs
+            const gridContainer = document.getElementById('serverGridContainer');
+            const serverCountSpan = document.getElementById('serverCount');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const toastEl = document.getElementById('toast');
+
+            let currentServers = []; // store parsed servers
+
+            // Helper: show toast
+            function showToast(text = 'Ссылка скопирована', duration = 2200) {
+                toastEl.textContent = text;
+                toastEl.classList.add('show');
+                clearTimeout(toastEl._hideTimer);
+                toastEl._hideTimer = setTimeout(() => {
+                    toastEl.classList.remove('show');
+                }, duration);
+            }
+
+            // Helper: copy to clipboard
+            function copyToClipboard(text) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showToast('Ссылка скопирована!');
+                    }).catch(() => {
+                        fallbackCopy(text);
+                    });
+                } else {
+                    fallbackCopy(text);
+                }
+            }
+
+            function fallbackCopy(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Ссылка скопирована!');
+                } catch (e) {
+                    showToast('Не удалось скопировать', 1500);
+                }
+                document.body.removeChild(textarea);
+            }
+
+            // Parse server links from raw text
+            function parseServerLinks(rawText) {
+                const lines = rawText.split(/\r?\n/);
+                const links = [];
+                // Regular expressions for each protocol
+                const protocols = [
+                    { regex: /^hysteria2:\/\//, name: 'hysteria2' },
+                    { regex: /^vmess:\/\//, name: 'vmess' },
+                    { regex: /^trojan:\/\//, name: 'trojan' },
+                    { regex: /^vless:\/\//, name: 'vless' },
+                    { regex: /^ss:\/\//, name: 'shadowsocks' }
+                ];
+
+                for (let line of lines) {
+                    line = line.trim();
+                    if (!line) continue;
+                    // Skip comments
+                    if (line.startsWith('#') || line.startsWith('//')) continue;
+                    
+                    let matched = false;
+                    for (let p of protocols) {
+                        if (p.regex.test(line)) {
+                            // extract country from fragment if present
+                            let country = 'Сервер';
+                            let flag = '🌍';
+                            try {
+                                const url = new URL(line);
+                                if (url.hash) {
+                                    const decoded = decodeURIComponent(url.hash.substring(1));
+                                    // try to find flag and country
+                                    const flagMatch = decoded.match(/^([\u{1F000}-\u{1FFFF}]|[\uD83C-\uDBFF][\uDC00-\uDFFF]+)/u);
+                                    if (flagMatch) {
+                                        flag = flagMatch[0];
+                                        let rest = decoded.substring(flag.length).trim();
+                                        if (rest.startsWith(',')) rest = rest.substring(1).trim();
+                                        if (rest) {
+                                            // remove trailing '| [BL]' or similar
+                                            rest = rest.replace(/\s*\|.*$/, '').trim();
+                                            if (rest) country = rest;
+                                        }
+                                    } else {
+                                        // no flag, try to parse country from hash
+                                        let clean = decoded.replace(/\s*\|.*$/, '').trim();
+                                        if (clean) country = clean;
+                                    }
+                                } else {
+                                    // no hash, try to get hostname
+                                    const host = url.hostname;
+                                    if (host) country = host;
+                                }
+                            } catch (e) {
+                                // fallback
+                            }
+                            links.push({
+                                raw: line,
+                                protocol: p.name,
+                                country: country,
+                                flag: flag,
+                            });
+                            matched = true;
+                            break;
+                        }
+                    }
+                    // if no protocol matched, but it might be a valid link? we skip
+                }
+                return links;
+            }
+
+            // Render server cards
+            function renderServers(servers) {
+                if (!servers || servers.length === 0) {
+                    gridContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-cloud-download-alt"></i>
+                            <h3>Нет доступных серверов</h3>
+                            <p>Не удалось найти ссылки в файле или список пуст.</p>
+                            <button class="btn" style="margin-top:1.2rem;" onclick="location.reload()">Повторить</button>
+                        </div>
+                    `;
+                    serverCountSpan.textContent = '0 серверов';
+                    return;
+                }
+
+                let html = '<div class="server-grid">';
+                for (let s of servers) {
+                    const displayCountry = s.country || 'Сервер';
+                    const flagEmoji = s.flag || '🌍';
+                    const protocolLabel = s.protocol || 'unknown';
+                    // truncate link for display
+                    let displayLink = s.raw;
+                    if (displayLink.length > 80) {
+                        displayLink = displayLink.substring(0, 78) + '…';
+                    }
+                    html += `
+                        <div class="server-card" data-raw="${encodeURIComponent(s.raw)}" data-protocol="${protocolLabel}">
+                            <div class="card-header">
+                                <span class="flag">${flagEmoji}</span>
+                                <span class="country">${displayCountry}</span>
+                                <span class="protocol-tag">${protocolLabel}</span>
+                            </div>
+                            <div class="server-link">${displayLink}</div>
+                            <div class="card-footer">
+                                <button class="copy-btn" data-link="${encodeURIComponent(s.raw)}"><i class="fas fa-copy"></i> Копировать</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+                gridContainer.innerHTML = html;
+                serverCountSpan.textContent = `${servers.length} серверов`;
+
+                // Attach event listeners to cards and copy buttons
+                document.querySelectorAll('.server-card').forEach(card => {
+                    const raw = decodeURIComponent(card.dataset.raw);
+                    // Click on card copies the link
+                    card.addEventListener('click', function(e) {
+                        // if click on button, we handle separately
+                        if (e.target.closest('.copy-btn')) return;
+                        copyToClipboard(raw);
+                    });
+                    // copy button
+                    const copyBtn = card.querySelector('.copy-btn');
+                    if (copyBtn) {
+                        copyBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const link = decodeURIComponent(this.dataset.link);
+                            copyToClipboard(link);
+                        });
+                    }
+                });
+            }
+
+            // Fetch and update
+            async function fetchServers() {
+                gridContainer.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> Загрузка списка...</div>`;
+                serverCountSpan.textContent = 'Загрузка...';
+                try {
+                    const response = await fetch(CONFIG_URL, {
+                        cache: 'no-store',
+                        headers: { 'Cache-Control': 'no-cache' }
+                    });
+                    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+                    const text = await response.text();
+                    const parsed = parseServerLinks(text);
+                    currentServers = parsed;
+                    renderServers(parsed);
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    gridContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Ошибка загрузки</h3>
+                            <p>Не удалось получить список серверов. Проверьте интернет или попробуйте позже.</p>
+                            <button class="btn" style="margin-top:1.2rem;" id="retryFetchBtn"><i class="fas fa-redo"></i> Повторить</button>
+                        </div>
+                    `;
+                    serverCountSpan.textContent = 'Ошибка';
+                    document.getElementById('retryFetchBtn')?.addEventListener('click', fetchServers);
+                }
+            }
+
+            // Download current list as .txt
+            function downloadTxt() {
+                if (!currentServers || currentServers.length === 0) {
+                    showToast('Нет серверов для скачивания', 1800);
+                    return;
+                }
+                const content = currentServers.map(s => s.raw).join('\n');
+                const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'vpn_servers.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('Файл скачан', 1500);
+            }
+
+            // Event listeners
+            refreshBtn.addEventListener('click', fetchServers);
+            downloadBtn.addEventListener('click', downloadTxt);
+
+            // Initial load
+            fetchServers();
+
+            // Also show toast on any copy error? we handle inside copy function
+            console.log('VPN сайт загружен. Приятного использования!');
+        })();
+    </script>
+</body>
+</html>
