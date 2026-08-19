@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>VPN Client · Happy</title>
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -120,12 +119,22 @@
             border-color: #0f3a60;
             color: white;
         }
+        .btn-success {
+            background: #0d7a3e;
+            border-color: #0d7a3e;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #09622f;
+            border-color: #09622f;
+            color: white;
+        }
         .btn i {
             font-size: 0.9rem;
         }
         .server-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1.2rem;
             margin-top: 0.5rem;
         }
@@ -136,10 +145,8 @@
             box-shadow: 0 6px 18px rgba(0,20,40,0.05);
             border: 1px solid rgba(0,0,0,0.02);
             transition: transform 0.15s, box-shadow 0.2s;
-            cursor: pointer;
             display: flex;
             flex-direction: column;
-            position: relative;
         }
         .server-card:hover {
             transform: translateY(-3px);
@@ -177,7 +184,7 @@
             white-space: nowrap;
         }
         .server-link {
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             color: #4a6a8a;
             background: #f2f6fc;
             padding: 0.5rem 0.7rem;
@@ -192,27 +199,52 @@
         }
         .card-footer {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
             margin-top: 0.7rem;
-            gap: 0.5rem;
             border-top: 1px solid #eef4fa;
             padding-top: 0.7rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
-        .copy-btn {
-            background: transparent;
-            border: none;
-            color: #4a7aaa;
-            font-size: 0.8rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: background 0.15s;
+        .card-footer .left-buttons {
             display: flex;
+            gap: 0.4rem;
+        }
+        .card-footer .right-buttons {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .btn-sm {
+            padding: 0.3rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 30px;
+            background: transparent;
+            border: 1px solid #d0ddee;
+            color: #1f3a57;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
             align-items: center;
             gap: 0.3rem;
+            white-space: nowrap;
         }
-        .copy-btn:hover {
-            background: #e3edf9;
+        .btn-sm:hover {
+            background: #f7faff;
+            border-color: #2a7de1;
+        }
+        .btn-connect {
+            background: #0d7a3e;
+            border-color: #0d7a3e;
+            color: white;
+        }
+        .btn-connect:hover {
+            background: #09622f;
+            border-color: #09622f;
+            color: white;
+        }
+        .btn-connect i {
+            font-size: 0.8rem;
         }
         .toast {
             position: fixed;
@@ -264,10 +296,58 @@
             padding-top: 1.8rem;
             width: 100%;
         }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: white;
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .modal h3 {
+            margin-bottom: 0.5rem;
+            color: #0b1e33;
+        }
+        .modal p {
+            color: #4a6a8a;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+        .modal .modal-actions {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .modal .btn {
+            min-width: 100px;
+            justify-content: center;
+        }
         @media (max-width: 640px) {
             .status-bar { flex-direction: column; align-items: stretch; }
             .actions { justify-content: center; }
             .server-grid { grid-template-columns: 1fr; }
+            .card-footer { flex-direction: column; align-items: stretch; }
+            .card-footer .left-buttons, .card-footer .right-buttons {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -275,7 +355,7 @@
     <div class="container">
         <header>
             <h1><i class="fas fa-globe"></i> VPN · Happy</h1>
-            <p>Серверы из <strong>catpaint/vpn</strong> — нажмите на карточку, чтобы скопировать ссылку</p>
+            <p>Серверы из <strong>catpaint/vpn</strong> — нажмите «Подключиться», чтобы открыть в клиенте</p>
         </header>
 
         <div class="status-bar" id="statusBar">
@@ -299,23 +379,39 @@
         </div>
     </div>
 
+    <!-- Modal для выбора приложения -->
+    <div class="modal-overlay" id="connectModal">
+        <div class="modal">
+            <h3><i class="fas fa-plug" style="color:#0d7a3e;"></i> Подключение к VPN</h3>
+            <p id="modalLinkDisplay" style="word-break:break-all;font-size:0.8rem;background:#f2f6fc;padding:0.5rem;border-radius:8px;"></p>
+            <p style="font-size:0.85rem;">Выберите приложение для открытия ссылки:</p>
+            <div class="modal-actions">
+                <button class="btn btn-success" id="modalOpenHiddify"><i class="fas fa-rocket"></i> Hiddify</button>
+                <button class="btn" id="modalOpenNekoray"><i class="fas fa-network-wired"></i> Nekoray</button>
+                <button class="btn" id="modalOpenDefault"><i class="fas fa-globe"></i> Системное</button>
+                <button class="btn" id="modalCancel" style="border-color:#e0e0e0;color:#666;"><i class="fas fa-times"></i> Отмена</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast" class="toast">Ссылка скопирована</div>
 
     <script>
         (function() {
             const CONFIG_URL = 'https://raw.githubusercontent.com/catpaint/vpn/refs/heads/main/vpn.txt';
             
-            // DOM refs
             const gridContainer = document.getElementById('serverGridContainer');
             const serverCountSpan = document.getElementById('serverCount');
             const refreshBtn = document.getElementById('refreshBtn');
             const downloadBtn = document.getElementById('downloadBtn');
             const toastEl = document.getElementById('toast');
+            const modal = document.getElementById('connectModal');
+            const modalLinkDisplay = document.getElementById('modalLinkDisplay');
+            let pendingConnectLink = '';
 
-            let currentServers = []; // store parsed servers
+            let currentServers = [];
 
-            // Helper: show toast
-            function showToast(text = 'Ссылка скопирована', duration = 2200) {
+            function showToast(text, duration = 2200) {
                 toastEl.textContent = text;
                 toastEl.classList.add('show');
                 clearTimeout(toastEl._hideTimer);
@@ -324,7 +420,6 @@
                 }, duration);
             }
 
-            // Helper: copy to clipboard
             function copyToClipboard(text) {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText(text).then(() => {
@@ -353,11 +448,45 @@
                 document.body.removeChild(textarea);
             }
 
-            // Parse server links from raw text
+            // Открытие ссылки через выбранное приложение
+            function openWithApp(link, app) {
+                let url = link;
+                switch(app) {
+                    case 'hiddify':
+                        // Hiddify принимает ссылки напрямую
+                        url = link;
+                        break;
+                    case 'nekoray':
+                        // Nekoray принимает ссылки напрямую
+                        url = link;
+                        break;
+                    default:
+                        // системный обработчик
+                        url = link;
+                }
+                // Пытаемся открыть
+                try {
+                    window.open(url, '_blank');
+                    showToast('Открываем в ' + (app === 'hiddify' ? 'Hiddify' : app === 'nekoray' ? 'Nekoray' : 'приложении по умолчанию'), 1500);
+                } catch(e) {
+                    showToast('Не удалось открыть. Попробуйте скопировать ссылку.', 2000);
+                }
+                modal.classList.remove('active');
+            }
+
+            function showConnectModal(link) {
+                pendingConnectLink = link;
+                // Показываем ссылку в модалке (обрезаем для красоты)
+                let display = link;
+                if (display.length > 60) display = display.substring(0, 57) + '…';
+                modalLinkDisplay.textContent = display;
+                modal.classList.add('active');
+            }
+
+            // Парсинг ссылок
             function parseServerLinks(rawText) {
                 const lines = rawText.split(/\r?\n/);
                 const links = [];
-                // Regular expressions for each protocol
                 const protocols = [
                     { regex: /^hysteria2:\/\//, name: 'hysteria2' },
                     { regex: /^vmess:\/\//, name: 'vmess' },
@@ -369,43 +498,35 @@
                 for (let line of lines) {
                     line = line.trim();
                     if (!line) continue;
-                    // Skip comments
                     if (line.startsWith('#') || line.startsWith('//')) continue;
                     
                     let matched = false;
                     for (let p of protocols) {
                         if (p.regex.test(line)) {
-                            // extract country from fragment if present
                             let country = 'Сервер';
                             let flag = '🌍';
                             try {
                                 const url = new URL(line);
                                 if (url.hash) {
                                     const decoded = decodeURIComponent(url.hash.substring(1));
-                                    // try to find flag and country
                                     const flagMatch = decoded.match(/^([\u{1F000}-\u{1FFFF}]|[\uD83C-\uDBFF][\uDC00-\uDFFF]+)/u);
                                     if (flagMatch) {
                                         flag = flagMatch[0];
                                         let rest = decoded.substring(flag.length).trim();
                                         if (rest.startsWith(',')) rest = rest.substring(1).trim();
                                         if (rest) {
-                                            // remove trailing '| [BL]' or similar
                                             rest = rest.replace(/\s*\|.*$/, '').trim();
                                             if (rest) country = rest;
                                         }
                                     } else {
-                                        // no flag, try to parse country from hash
                                         let clean = decoded.replace(/\s*\|.*$/, '').trim();
                                         if (clean) country = clean;
                                     }
                                 } else {
-                                    // no hash, try to get hostname
                                     const host = url.hostname;
                                     if (host) country = host;
                                 }
-                            } catch (e) {
-                                // fallback
-                            }
+                            } catch (e) {}
                             links.push({
                                 raw: line,
                                 protocol: p.name,
@@ -416,12 +537,11 @@
                             break;
                         }
                     }
-                    // if no protocol matched, but it might be a valid link? we skip
                 }
                 return links;
             }
 
-            // Render server cards
+            // Рендер карточек
             function renderServers(servers) {
                 if (!servers || servers.length === 0) {
                     gridContainer.innerHTML = `
@@ -441,13 +561,12 @@
                     const displayCountry = s.country || 'Сервер';
                     const flagEmoji = s.flag || '🌍';
                     const protocolLabel = s.protocol || 'unknown';
-                    // truncate link for display
                     let displayLink = s.raw;
-                    if (displayLink.length > 80) {
-                        displayLink = displayLink.substring(0, 78) + '…';
+                    if (displayLink.length > 70) {
+                        displayLink = displayLink.substring(0, 68) + '…';
                     }
                     html += `
-                        <div class="server-card" data-raw="${encodeURIComponent(s.raw)}" data-protocol="${protocolLabel}">
+                        <div class="server-card" data-raw="${encodeURIComponent(s.raw)}">
                             <div class="card-header">
                                 <span class="flag">${flagEmoji}</span>
                                 <span class="country">${displayCountry}</span>
@@ -455,7 +574,16 @@
                             </div>
                             <div class="server-link">${displayLink}</div>
                             <div class="card-footer">
-                                <button class="copy-btn" data-link="${encodeURIComponent(s.raw)}"><i class="fas fa-copy"></i> Копировать</button>
+                                <div class="left-buttons">
+                                    <button class="btn-sm btn-connect" data-link="${encodeURIComponent(s.raw)}">
+                                        <i class="fas fa-power-off"></i> Подключиться
+                                    </button>
+                                </div>
+                                <div class="right-buttons">
+                                    <button class="btn-sm" data-copy="${encodeURIComponent(s.raw)}">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -464,28 +592,39 @@
                 gridContainer.innerHTML = html;
                 serverCountSpan.textContent = `${servers.length} серверов`;
 
-                // Attach event listeners to cards and copy buttons
+                // Обработчики
                 document.querySelectorAll('.server-card').forEach(card => {
                     const raw = decodeURIComponent(card.dataset.raw);
-                    // Click on card copies the link
-                    card.addEventListener('click', function(e) {
-                        // if click on button, we handle separately
-                        if (e.target.closest('.copy-btn')) return;
-                        copyToClipboard(raw);
-                    });
-                    // copy button
-                    const copyBtn = card.querySelector('.copy-btn');
+                    
+                    // Кнопка "Подключиться"
+                    const connectBtn = card.querySelector('.btn-connect');
+                    if (connectBtn) {
+                        connectBtn.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            const link = decodeURIComponent(this.dataset.link);
+                            showConnectModal(link);
+                        });
+                    }
+
+                    // Кнопка копирования
+                    const copyBtn = card.querySelector('[data-copy]');
                     if (copyBtn) {
                         copyBtn.addEventListener('click', function(e) {
                             e.stopPropagation();
-                            const link = decodeURIComponent(this.dataset.link);
+                            const link = decodeURIComponent(this.dataset.copy);
                             copyToClipboard(link);
                         });
                     }
+
+                    // Клик по карточке - копирование
+                    card.addEventListener('click', function(e) {
+                        if (e.target.closest('button')) return;
+                        copyToClipboard(raw);
+                    });
                 });
             }
 
-            // Fetch and update
+            // Загрузка серверов
             async function fetchServers() {
                 gridContainer.innerHTML = `<div class="loading"><i class="fas fa-spinner"></i> Загрузка списка...</div>`;
                 serverCountSpan.textContent = 'Загрузка...';
@@ -514,7 +653,7 @@
                 }
             }
 
-            // Download current list as .txt
+            // Скачивание списка
             function downloadTxt() {
                 if (!currentServers || currentServers.length === 0) {
                     showToast('Нет серверов для скачивания', 1800);
@@ -533,15 +672,29 @@
                 showToast('Файл скачан', 1500);
             }
 
-            // Event listeners
+            // Модалка: обработчики
+            document.getElementById('modalOpenHiddify').addEventListener('click', function() {
+                if (pendingConnectLink) openWithApp(pendingConnectLink, 'hiddify');
+            });
+            document.getElementById('modalOpenNekoray').addEventListener('click', function() {
+                if (pendingConnectLink) openWithApp(pendingConnectLink, 'nekoray');
+            });
+            document.getElementById('modalOpenDefault').addEventListener('click', function() {
+                if (pendingConnectLink) openWithApp(pendingConnectLink, 'default');
+            });
+            document.getElementById('modalCancel').addEventListener('click', function() {
+                modal.classList.remove('active');
+            });
+            // Закрытие по клику вне модалки
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) modal.classList.remove('active');
+            });
+
             refreshBtn.addEventListener('click', fetchServers);
             downloadBtn.addEventListener('click', downloadTxt);
 
-            // Initial load
+            // Загрузка
             fetchServers();
-
-            // Also show toast on any copy error? we handle inside copy function
-            console.log('VPN сайт загружен. Приятного использования!');
         })();
     </script>
 </body>
